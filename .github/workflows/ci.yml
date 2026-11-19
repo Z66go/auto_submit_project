@@ -1,45 +1,19 @@
-name: CI
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Install Playwright Browsers
-        run: playwright install --with-deps chromium
-
       - name: Start Backend Service
         run: |
-          python -u main.py > server.log 2>&1 &
+          # 加上子文件夹前缀，并用 nohup 确保后台稳定运行
+          nohup python -u auto_submit_project/main.py > server.log 2>&1 &
           
-          # 增加重试机制，确保网站真正启动完毕
+          # 强力等待服务真正启动成功
           ATTEMPTS=0
-          while ! curl --output /dev/null --silent --head --fail http://localhost:5000 && [ $ATTEMPTS -lt 20 ]; do
+          while ! curl --output /dev/null --silent --head --fail http://localhost:5000 && [ $ATTEMPTS -lt 30 ]; do
             ATTEMPTS=$((ATTEMPTS+1))
             echo "Waiting for server to start... ($ATTEMPTS)"
             sleep 1
           done
           
-          if [ $ATTEMPTS -ge 20 ]; then
-            echo "Server failed to start within 20 seconds."
+          if [ $ATTEMPTS -ge 30 ]; then
+            echo "Server failed to start within 30 seconds. Server log:"
             cat server.log
             exit 1
           fi
-          echo "Backend service is up and running on port 5000!"
-
-      - name: Run tests
-        run: pytest tests/ -v
+          echo "✅ Backend service is up and running on port 5000!"
