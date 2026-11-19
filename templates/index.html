@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>自动化提交靶场</title>
+    <style>
+        body { font-family: Arial; max-width: 600px; margin: 40px auto; padding: 20px; }
+        .target-list { background: #f0f0f0; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .target-list li { margin: 5px 0; }
+        form { background: #e8f4fd; padding: 20px; border-radius: 8px; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input[type="text"], input[type="email"] { width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box; }
+        button { margin-top: 15px; padding: 10px 30px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #45a049; }
+        #result { margin-top: 15px; padding: 10px; display: none; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>目标信息列表</h1>
+    <div class="target-list">
+        <ul id="target-list">
+            {% for t in targets %}
+            <li>{{ t.name }} - {{ t.email }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <h2>填写表单</h2>
+    <form id="submitForm">
+        <label>姓名:</label>
+        <input type="text" id="username" name="username">
+
+        <label>邮箱:</label>
+        <input type="email" id="email" name="email">
+
+        <label>上传简历:</label>
+        <input type="file" id="resume" name="resume">
+
+        <button type="button" id="submit-btn" onclick="submitForm()">提交</button>
+    </form>
+
+    <div id="result"></div>
+
+    <script>
+        function submitForm() {
+            const formData = new FormData(document.getElementById('submitForm'));
+            fetch('/submit_single', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    const result = document.getElementById('result');
+                    result.style.display = 'block';
+                    result.className = 'success';
+                    result.textContent = data.message;
+                });
+        }
+    </script>
+</body>
+</html>

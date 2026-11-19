@@ -1,0 +1,8 @@
+阶段	做什么	你现在在哪
+阶段	做什么	你现在在哪
+1. 编程+框架	Python 基础、Pytest 组织用例、fixture	✅ 正在做
+2. UI 自动化	Playwright 页面对象模型、等待机制、断言	✅ 正在做
+3. 接口自动化	Requests 调接口、Token 处理、参数化	下一步
+4. 工程化	Git 提交、Docker 打包、CI 流水线	今天学 Docker
+5. 专项能力	数据库校验、日志、Allure 报告	后面补
+6. Agent 实战	把 LinkedIn/Indeed 投递做成自动化	最终目标

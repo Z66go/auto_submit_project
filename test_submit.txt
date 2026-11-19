@@ -1,0 +1,10 @@
+from pages.resume_page import ResumePage
+
+def test_submit_resume(resume_page: ResumePage):
+    resume_page.goto()
+    resume_page.fill_name("测试用户")
+    resume_page.fill_email("test@example.com")
+    resume_page.upload_resume(r"C:\Users\Administrator\Desktop\test_resume.pdf")
+    resume_page.click_submit()
+    result = resume_page.get_result_text()
+    assert "成功" in result or "success" in result.lower()
