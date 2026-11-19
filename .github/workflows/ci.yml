@@ -8,14 +8,26 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.10"
+
       - name: Install dependencies
         run: pip install -r requirements.txt
+
       - name: Install Playwright Browsers
         run: playwright install --with-deps chromium
+
+      - name: Start Backend Service
+        run: |
+          python main.py > server.log 2>&1 &
+          sleep 5
+          echo "Backend server started, log:"
+          cat server.log
+
       - name: Run tests
         run: pytest tests/ -v
