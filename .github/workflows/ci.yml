@@ -24,10 +24,22 @@ jobs:
 
       - name: Start Backend Service
         run: |
-          python main.py > server.log 2>&1 &
-          sleep 5
-          echo "Backend server started, log:"
-          cat server.log
+          python -u main.py > server.log 2>&1 &
+          
+          # 增加重试机制，确保网站真正启动完毕
+          ATTEMPTS=0
+          while ! curl --output /dev/null --silent --head --fail http://localhost:5000 && [ $ATTEMPTS -lt 20 ]; do
+            ATTEMPTS=$((ATTEMPTS+1))
+            echo "Waiting for server to start... ($ATTEMPTS)"
+            sleep 1
+          done
+          
+          if [ $ATTEMPTS -ge 20 ]; then
+            echo "Server failed to start within 20 seconds."
+            cat server.log
+            exit 1
+          fi
+          echo "Backend service is up and running on port 5000!"
 
       - name: Run tests
         run: pytest tests/ -v
