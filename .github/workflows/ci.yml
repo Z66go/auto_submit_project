@@ -1,19 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install Playwright Browsers
+        run: playwright install --with-deps chromium
+
       - name: Start Backend Service
         run: |
-          # 加上子文件夹前缀，并用 nohup 确保后台稳定运行
-          nohup python -u auto_submit_project/main.py > server.log 2>&1 &
-          
+          # 自动查找并打印 main.py 的位置
+          echo "Searching for main.py..."
+          MAIN_PATH=$(find . -maxdepth 2 -name "main.py" | head -n 1)
+          echo "Found main.py at: $MAIN_PATH"
+
+          # 启动后端服务（尝试切换到 8000 端口，并强制无缓冲）
+          echo "Starting backend service..."
+          nohup python -u "$MAIN_PATH" > server.log 2>&1 &
+          SERVER_PID=$!
+          echo "Server PID is: $SERVER_PID"
+
+          # 打印 3 秒后的启动日志，看看有没有报错
+          sleep 3
+          echo "--- Server startup log ---"
+          cat server.log
+          echo "--------------------------"
+
           # 强力等待服务真正启动成功
           ATTEMPTS=0
-          while ! curl --output /dev/null --silent --head --fail http://localhost:5000 && [ $ATTEMPTS -lt 30 ]; do
+          while ! curl --output /dev/null --silent --head --fail http://localhost:8000 && [ $ATTEMPTS -lt 30 ]; do
             ATTEMPTS=$((ATTEMPTS+1))
-            echo "Waiting for server to start... ($ATTEMPTS)"
             sleep 1
           done
           
           if [ $ATTEMPTS -ge 30 ]; then
-            echo "Server failed to start within 30 seconds. Server log:"
+            echo "❌ Server failed to start within 30 seconds. Current log:"
             cat server.log
             exit 1
           fi
-          echo "✅ Backend service is up and running on port 5000!"
+          echo "✅ Backend service is up and running on port 8000!"
+          
+      - name: Run tests
+        run: pytest tests/ -v
+        env:
+          # 告诉 Playwright 的 base-url 插件我们的服务在 8000 端口
+          BASE_URL: http://localhost:8000
