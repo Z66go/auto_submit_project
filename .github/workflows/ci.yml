@@ -24,24 +24,25 @@ jobs:
 
       - name: Start Backend Service
         run: |
-          # 1. 智能查找 main.py 的绝对路径
-          echo "Searching for main.py in entire project..."
-          MAIN_FILE=$(find . -name "main.py" -type f | head -n 1)
-          MAIN_DIR=$(dirname "$MAIN_FILE")
-          
-          echo "Found main.py at: $MAIN_FILE"
-          echo "Switching to directory: $MAIN_DIR"
+          # 1. 智能查找 app.py 的绝对路径（注意：这里找的是 app.py）
+          echo "Searching for app.py in entire project..."
+          APP_FILE=$(find . -name "app.py" -type f | head -n 1)
+          APP_DIR=$(dirname "$APP_FILE")
 
-          # 2. 切换到 main.py 所在的真实目录
-          cd "$MAIN_DIR"
+          echo "Found app.py at: $APP_FILE"
+          echo "Project Dir: $APP_DIR"
 
-          # 3. 在当前目录下启动 Flask 服务
-          # 注意：这里假设 main.py 启动的端口是 5000，如果本地是 8000 请自行修改
+          # 2. 打印一下该目录下的文件，确保 app.py 真的在这里
+          echo "Files in the directory:"
+          ls -l "$APP_DIR"
+
+          # 3. 启动服务（使用全路径，绝对安全，不会被切目录搞乱）
           echo "Starting server..."
-          nohup python -u main.py > server.log 2>&1 &
-          
+          nohup python -u "$APP_DIR/app.py" > "$APP_DIR/server.log" 2>&1 &
+
           # 4. 等待服务真正启动成功
           ATTEMPTS=0
+          echo "Waiting for server to start..."
           while ! curl --output /dev/null --silent --head --fail http://localhost:5000 && [ $ATTEMPTS -lt 30 ]; do
             ATTEMPTS=$((ATTEMPTS+1))
             sleep 1
@@ -49,10 +50,10 @@ jobs:
 
           if [ $ATTEMPTS -ge 30 ]; then
             echo "❌ Server failed to start within 30 seconds. Log:"
-            cat server.log
+            cat "$APP_DIR/server.log"
             exit 1
           fi
-          
+
           echo "✅ Backend service is up and running!"
 
       - name: Run tests
